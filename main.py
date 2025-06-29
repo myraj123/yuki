@@ -114,7 +114,7 @@ async def remove_auth_user(client: Client, message: Message):
         await message.reply_text("Please provide a valid user ID.")
     
         
-@bot.on_message(filters.command("cookies") & filters.private)
+@bot.on_message(filters.command("cookies")
 async def cookies_handler(client: Client, m: Message):
     await m.reply_text(
         "Please upload the cookies file (.txt format).",
@@ -273,18 +273,8 @@ async def getcookies_handler(client: Client, m: Message):
 
 @bot.on_message(filters.command(["stop"]) )
 async def restart_handler(_, m):
-    if m.chat.id not in AUTH_USERS:
-        print(f"User ID not in AUTH_USERS", m.chat.id)
-        await bot.send_message(
-            m.chat.id, 
-            f"<blockquote>__**Oopss! You are not a Premium member**__\n"
-            f"__**PLEASE /upgrade YOUR PLAN**__\n"
-            f"__**Send me your user id for authorization**__\n"
-            f"__**Your User id** __- `{m.chat.id}`</blockquote>\n\n"
-        )
-    else:
-        await m.reply_text("🚦**STOPPED**🚦", True)
-        os.execl(sys.executable, sys.executable, *sys.argv)
+    await m.reply_text("🚦**STOPPED**🚦", True)
+    os.execl(sys.executable, sys.executable, *sys.argv)
         
 
 @bot.on_message(filters.command("start"))
