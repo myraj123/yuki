@@ -114,169 +114,18 @@ async def remove_auth_user(client: Client, message: Message):
         await message.reply_text("Please provide a valid user ID.")
     
         
-@bot.on_message(filters.command("cookies")
-async def cookies_handler(client: Client, m: Message):
-    await m.reply_text(
-        "Please upload the cookies file (.txt format).",
-        quote=True
-    )
-
-    try:
-        # Wait for the user to send the cookies file
-        input_message: Message = await client.listen(m.chat.id)
-
-        # Validate the uploaded file
-        if not input_message.document or not input_message.document.file_name.endswith(".txt"):
-            await m.reply_text("Invalid file type. Please upload a .txt file.")
-            return
-
-        # Download the cookies file
-        downloaded_path = await input_message.download()
-
-        # Read the content of the uploaded file
-        with open(downloaded_path, "r") as uploaded_file:
-            cookies_content = uploaded_file.read()
-
-        # Replace the content of the target cookies file
-        with open(cookies_file_path, "w") as target_file:
-            target_file.write(cookies_content)
-
-        await input_message.reply_text(
-            "✅ Cookies updated successfully.\n📂 Saved in `youtube_cookies.txt`."
-        )
-
-    except Exception as e:
-        await m.reply_text(f"⚠️ An error occurred: {str(e)}")
-
-@bot.on_message(filters.command(["t2t"]))
-async def text_to_txt(client, message: Message):
-    user_id = str(message.from_user.id)
-    # Inform the user to send the text data and its desired file name
-    editable = await message.reply_text(f"<blockquote>Welcome to the Text to .txt Converter!\nSend the **text** for convert into a `.txt` file.</blockquote>")
-    input_message: Message = await bot.listen(message.chat.id)
-    if not input_message.text:
-        await message.reply_text("**Send valid text data**")
-        return
-
-    text_data = input_message.text.strip()
-    await input_message.delete()  # Corrected here
-    
-    await editable.edit("**🔄 Send file name or send /d for filename**")
-    inputn: Message = await bot.listen(message.chat.id)
-    raw_textn = inputn.text
-    await inputn.delete()  # Corrected here
-    await editable.delete()
-
-    if raw_textn == '/d':
-        custom_file_name = 'txt_file'
-    else:
-        custom_file_name = raw_textn
-
-    txt_file = os.path.join("downloads", f'{custom_file_name}.txt')
-    os.makedirs(os.path.dirname(txt_file), exist_ok=True)  # Ensure the directory exists
-    with open(txt_file, 'w') as f:
-        f.write(text_data)
-        
-    await message.reply_document(document=txt_file, caption=f"`{custom_file_name}.txt`\n\n<blockquote>You can now download your content! 📥</blockquote>")
-    os.remove(txt_file)
-
-# Define paths for uploaded file and processed file
-UPLOAD_FOLDER = '/path/to/upload/folder'
-EDITED_FILE_PATH = '/path/to/save/edited_output.txt'
-
-@bot.on_message(filters.command(["y2t"]))
-async def youtube_to_txt(client, message: Message):
-    user_id = str(message.from_user.id)
-    
-    editable = await message.reply_text(
-        f"Send YouTube Website/Playlist link for convert in .txt file"
-    )
-
-    input_message: Message = await bot.listen(message.chat.id)
-    youtube_link = input_message.text.strip()
-    await input_message.delete(True)
-    await editable.delete(True)
-
-    # Fetch the YouTube information using yt-dlp with cookies
-    ydl_opts = {
-        'quiet': True,
-        'extract_flat': True,
-        'skip_download': True,
-        'force_generic_extractor': True,
-        'forcejson': True,
-        'cookies': 'youtube_cookies.txt'  # Specify the cookies file
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            result = ydl.extract_info(youtube_link, download=False)
-            if 'entries' in result:
-                title = result.get('title', 'youtube_playlist')
-            else:
-                title = result.get('title', 'youtube_video')
-        except yt_dlp.utils.DownloadError as e:
-            await message.reply_text(
-                f"<blockquote>{str(e)}</blockquote>"
-            )
-            return
-
-    # Extract the YouTube links
-    videos = []
-    if 'entries' in result:
-        for entry in result['entries']:
-            video_title = entry.get('title', 'No title')
-            url = entry['url']
-            videos.append(f"{video_title}: {url}")
-    else:
-        video_title = result.get('title', 'No title')
-        url = result['url']
-        videos.append(f"{video_title}: {url}")
-
-    # Create and save the .txt file with the custom name
-    txt_file = os.path.join("downloads", f'{title}.txt')
-    os.makedirs(os.path.dirname(txt_file), exist_ok=True)  # Ensure the directory exists
-    with open(txt_file, 'w') as f:
-        f.write('\n'.join(videos))
-
-    # Send the generated text file to the user with a pretty caption
-    await message.reply_document(
-        document=txt_file,
-        caption=f'<a href="{youtube_link}">__**Click Here to Open Link**__</a>\n<blockquote>{title}.txt</blockquote>\n'
-    )
-
-    # Remove the temporary text file after sending
-    os.remove(txt_file)
-
-
-m_file_path= "main.py"
-@bot.on_message(filters.command("getcookies") & filters.private)
-async def getcookies_handler(client: Client, m: Message):
-    try:
-        # Send the cookies file to the user
-        await client.send_document(
-            chat_id=m.chat.id,
-            document=cookies_file_path,
-            caption="Here is the `youtube_cookies.txt` file."
-        )
-    except Exception as e:
-        await m.reply_text(f"⚠️ An error occurred: {str(e)}")     
-@bot.on_message(filters.command("mfile") & filters.private)
-async def getcookies_handler(client: Client, m: Message):
-    try:
-        await client.send_document(
-            chat_id=m.chat.id,
-            document=m_file_path,
-            caption="Here is the `main.py` file."
-        )
-    except Exception as e:
-        await m.reply_text(f"⚠️ An error occurred: {str(e)}")
-
-@bot.on_message(filters.command(["stop"]) )
+@bot.on_message(filters.command("stop")
 async def restart_handler(_, m):
-    await m.reply_text("🚦**STOPPED**🚦", True)
+    await m.reply_text("**STOPPED**🛑", True)
     os.execl(sys.executable, sys.executable, *sys.argv)
-        
 
+@bot.on_message(filters.command(["cancel"])&(filters.chat(auth_users)))
+async def cancel(_, m):
+    editable = await m.reply_text("Canceling All process Plz wait\n🚦🚦 Last Process Stopped 🚦🚦")
+    global cancel
+    cancel = True
+    await editable.edit("cancled")
+    return
 @bot.on_message(filters.command("start"))
 async def start(bot, m: Message):
     user = await bot.get_me()
