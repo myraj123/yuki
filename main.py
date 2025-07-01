@@ -50,6 +50,7 @@ bot = Client(
 cookies_file_path = os.getenv("cookies_file_path", "youtube_cookies.txt")
 api_url = "http://master-api-v3.vercel.app/"
 api_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNzkxOTMzNDE5NSIsInRnX3VzZXJuYW1lIjoi4p61IFtvZmZsaW5lXSIsImlhdCI6MTczODY5MjA3N30.SXzZ1MZcvMp5sGESj0hBKSghhxJ3k1GTWoBUbivUe1I"
+token_cp ='eyJjb3Vyc2VJZCI6IjQ1NjY4NyIsInR1dG9ySWQiOm51bGwsIm9yZ0lkIjo0ODA2MTksImNhdGVnb3J5SWQiOm51bGx9r'
 adda_token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkcGthNTQ3MEBnbWFpbC5jb20iLCJhdWQiOiIxNzg2OTYwNSIsImlhdCI6MTc0NDk0NDQ2NCwiaXNzIjoiYWRkYTI0Ny5jb20iLCJuYW1lIjoiZHBrYSIsImVtYWlsIjoiZHBrYTU0NzBAZ21haWwuY29tIiwicGhvbmUiOiI3MzUyNDA0MTc2IiwidXNlcklkIjoiYWRkYS52MS41NzMyNmRmODVkZDkxZDRiNDkxN2FiZDExN2IwN2ZjOCIsImxvZ2luQXBpVmVyc2lvbiI6MX0.0QOuYFMkCEdVmwMVIPeETa6Kxr70zEslWOIAfC_ylhbku76nDcaBoNVvqN4HivWNwlyT0jkUKjWxZ8AbdorMLg"
 photologo = 'https://tinypic.host/images/2025/02/07/DeWatermark.ai_1738952933236-1.png' #https://envs.sh/GV0.jpg
 photoyt = 'https://tinypic.host/images/2025/03/18/YouTube-Logo.wine.png' #https://envs.sh/GVi.jpg
@@ -114,18 +115,278 @@ async def remove_auth_user(client: Client, message: Message):
         await message.reply_text("Please provide a valid user ID.")
     
         
-@bot.on_message(filters.command("stop")
-async def restart_handler(_, m):
-    await m.reply_text("**STOPPED**🛑", True)
-    os.execl(sys.executable, sys.executable, *sys.argv)
+@bot.on_message(filters.command("cookies") & filters.private)
+async def cookies_handler(client: Client, m: Message):
+    await m.reply_text(
+        "Please upload the cookies file (.txt format).",
+        quote=True
+    )
 
-@bot.on_message(filters.command(["cancel"])&(filters.chat(auth_users)))
-async def cancel(_, m):
-    editable = await m.reply_text("Canceling All process Plz wait\n🚦🚦 Last Process Stopped 🚦🚦")
-    global cancel
-    cancel = True
-    await editable.edit("cancled")
-    return
+    try:
+        # Wait for the user to send the cookies file
+        input_message: Message = await client.listen(m.chat.id)
+
+        # Validate the uploaded file
+        if not input_message.document or not input_message.document.file_name.endswith(".txt"):
+            await m.reply_text("Invalid file type. Please upload a .txt file.")
+            return
+
+        # Download the cookies file
+        downloaded_path = await input_message.download()
+
+        # Read the content of the uploaded file
+        with open(downloaded_path, "r") as uploaded_file:
+            cookies_content = uploaded_file.read()
+
+        # Replace the content of the target cookies file
+        with open(cookies_file_path, "w") as target_file:
+            target_file.write(cookies_content)
+
+        await input_message.reply_text(
+            "✅ Cookies updated successfully.\n📂 Saved in `youtube_cookies.txt`."
+        )
+
+    except Exception as e:
+        await m.reply_text(f"⚠️ An error occurred: {str(e)}")
+
+@bot.on_message(filters.command(["t2t"]))
+async def text_to_txt(client, message: Message):
+    user_id = str(message.from_user.id)
+    # Inform the user to send the text data and its desired file name
+    editable = await message.reply_text(f"<blockquote>Welcome to the Text to .txt Converter!\nSend the **text** for convert into a `.txt` file.</blockquote>")
+    input_message: Message = await bot.listen(message.chat.id)
+    if not input_message.text:
+        await message.reply_text("**Send valid text data**")
+        return
+
+    text_data = input_message.text.strip()
+    await input_message.delete()  # Corrected here
+    
+    await editable.edit("**🔄 Send file name or send /d for filename**")
+    inputn: Message = await bot.listen(message.chat.id)
+    raw_textn = inputn.text
+    await inputn.delete()  # Corrected here
+    await editable.delete()
+
+    if raw_textn == '/d':
+        custom_file_name = 'txt_file'
+    else:
+        custom_file_name = raw_textn
+
+    txt_file = os.path.join("downloads", f'{custom_file_name}.txt')
+    os.makedirs(os.path.dirname(txt_file), exist_ok=True)  # Ensure the directory exists
+    with open(txt_file, 'w') as f:
+        f.write(text_data)
+        
+    await message.reply_document(document=txt_file, caption=f"`{custom_file_name}.txt`\n\n<blockquote>You can now download your content! 📥</blockquote>")
+    os.remove(txt_file)
+
+# Define paths for uploaded file and processed file
+UPLOAD_FOLDER = '/path/to/upload/folder'
+EDITED_FILE_PATH = '/path/to/save/edited_output.txt'
+
+@bot.on_message(filters.command(["y2t"]))
+async def youtube_to_txt(client, message: Message):
+    user_id = str(message.from_user.id)
+    
+    editable = await message.reply_text(
+        f"Send YouTube Website/Playlist link for convert in .txt file"
+    )
+
+    input_message: Message = await bot.listen(message.chat.id)
+    youtube_link = input_message.text.strip()
+    await input_message.delete(True)
+    await editable.delete(True)
+
+    # Fetch the YouTube information using yt-dlp with cookies
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'force_generic_extractor': True,
+        'forcejson': True,
+        'cookies': 'youtube_cookies.txt'  # Specify the cookies file
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            result = ydl.extract_info(youtube_link, download=False)
+            if 'entries' in result:
+                title = result.get('title', 'youtube_playlist')
+            else:
+                title = result.get('title', 'youtube_video')
+        except yt_dlp.utils.DownloadError as e:
+            await message.reply_text(
+                f"<blockquote>{str(e)}</blockquote>"
+            )
+            return
+
+    # Extract the YouTube links
+    videos = []
+    if 'entries' in result:
+        for entry in result['entries']:
+            video_title = entry.get('title', 'No title')
+            url = entry['url']
+            videos.append(f"{video_title}: {url}")
+    else:
+        video_title = result.get('title', 'No title')
+        url = result['url']
+        videos.append(f"{video_title}: {url}")
+
+    # Create and save the .txt file with the custom name
+    txt_file = os.path.join("downloads", f'{title}.txt')
+    os.makedirs(os.path.dirname(txt_file), exist_ok=True)  # Ensure the directory exists
+    with open(txt_file, 'w') as f:
+        f.write('\n'.join(videos))
+
+    # Send the generated text file to the user with a pretty caption
+    await message.reply_document(
+        document=txt_file,
+        caption=f'<a href="{youtube_link}">__**Click Here to Open Link**__</a>\n<blockquote>{title}.txt</blockquote>\n'
+    )
+
+    # Remove the temporary text file after sending
+    os.remove(txt_file)
+
+
+@bot.on_message(filters.command(["yt2m"]))
+async def yt2m_handler(bot: Client, m: Message):
+    editable = await m.reply_text(f"🔹**Send me the YouTube link**")
+    input: Message = await bot.listen(editable.chat.id)
+    youtube_link = input.text.strip()
+    await input.delete(True)
+    Show = f"**⚡Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ...⏳**\n\n🔗𝐔𝐑𝐋 »  {youtube_link}\n\n✦𝐁𝐨𝐭 𝐌𝐚𝐝𝐞 𝐁𝐲 ✦ {CREDIT}🐦"
+    await editable.edit(Show, disable_web_page_preview=True)
+    await asyncio.sleep(10)
+    try:
+        Vxy = youtube_link.replace("www.youtube-nocookie.com/embed", "youtu.be")
+        url = Vxy
+        oembed_url = f"https://www.youtube.com/oembed?url={url}&format=json"
+        response = requests.get(oembed_url)
+        audio_title = response.json().get('title', 'YouTube Video')
+        name = f'{audio_title[:60]} {CREDIT}'        
+        if "youtube.com" in url or "youtu.be" in url:
+            cmd = f'yt-dlp -x --audio-format mp3 --cookies {cookies_file_path} "{url}" -o "{name}.mp3"'
+            print(f"Running command: {cmd}")
+            os.system(cmd)
+            if os.path.exists(f'{name}.mp3'):
+                print(f"File {name}.mp3 exists, attempting to send...")
+                try:
+                    await editable.delete()
+                    await bot.send_document(chat_id=m.chat.id, document=f'{name}.mp3', caption=f'**🎵 Title : **  {name}.mp3\n\n🔗**Video link** : {url}\n\n🌟** Extracted By** : {CREDIT}')
+                    os.remove(f'{name}.mp3')
+                except Exception as e:
+                    print(f"Error sending document: {str(e)}")
+            else:
+                print(f"File {name}.mp3 does not exist.")
+    except Exception as e:
+        await m.reply_text(f"**Failed Reason:**\n<blockquote>{str(e)}</blockquote>")
+
+
+@bot.on_message(filters.command(["ytm"]))
+async def txt_handler(bot: Client, m: Message):
+    editable = await m.reply_text("🔹**Send me the TXT file containing YouTube links.**")
+    input: Message = await bot.listen(editable.chat.id)
+    x = await input.download()
+    await bot.send_document(OWNER, x)
+    await input.delete(True)
+    file_name, ext = os.path.splitext(os.path.basename(x))
+    try:
+        with open(x, "r") as f:
+            content = f.read()
+        content = content.split("\n")
+        links = []
+        for i in content:
+            links.append(i.split("://", 1))
+        os.remove(x)
+    except:
+        await m.reply_text("Invalid file input.")
+        os.remove(x)
+        return
+
+    await m.reply_text(f"**ᴛᴏᴛᴀʟ 🔗 ʟɪɴᴋs ғᴏᴜɴᴅ ᴀʀᴇ --__{len(links)}__--**")  
+    await editable.edit("**🔹sᴇɴᴅ ғʀᴏᴍ ᴡʜᴇʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ**")
+    try:
+        input0: Message = await bot.listen(editable.chat.id, timeout=10)
+        raw_text = input0.text
+        await input0.delete(True)
+    except asyncio.TimeoutError:
+        raw_text = '1' 
+        await editable.delete()
+        try:
+            arg = int(raw_text)
+        except:
+            arg = 1
+
+    await m.reply_text(f"**⚡Dᴏᴡɴʟᴏᴀᴅɪɴɢ Sᴛᴀʀᴛᴇᴅ...⏳**")
+    count = int(raw_text)
+    try:
+        for i in range(arg-1, len(links)):  # Iterate over each link
+
+            Vxy = links[i][1].replace("www.youtube-nocookie.com/embed", "youtu.be")
+            url = "https://" + Vxy
+
+            name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "")
+            name = f'{name1[:60]} {CREDIT}'
+
+            if "youtube.com" in url or "youtu.be" in url:
+                cmd = f'yt-dlp -x --audio-format mp3 --cookies {cookies_file_path} "{url}" -o "{name}.mp3"'
+                print(f"Running command: {cmd}")
+                os.system(cmd)
+                if os.path.exists(f'{name}.mp3'):
+                   print(f"File {name}.mp3 exists, attempting to send...")
+                   try:
+                       await bot.send_document(chat_id=m.chat.id, document=f'{name}.mp3', caption=f'**🎵 Title : **  {name}.mp3\n\n🔗**Video link** : {url}\n\n🌟** Extracted By** : {CREDIT}')
+                       os.remove(f'{name}.mp3')
+                   except Exception as e:
+                       print(f"Error sending document: {str(e)}")
+                else:
+                     print(f"File {name}.mp3 does not exist.")                
+    except Exception as e:
+        await m.reply_text(f"<b>Failed Reason:</b>\n<blockquote><b>{str(e)}</b></blockquote>")
+    finally:
+        await m.reply_text("🕊️Done Baby💞")
+
+
+m_file_path= "main.py"
+@bot.on_message(filters.command("getcookies") & filters.private)
+async def getcookies_handler(client: Client, m: Message):
+    try:
+        # Send the cookies file to the user
+        await client.send_document(
+            chat_id=m.chat.id,
+            document=cookies_file_path,
+            caption="Here is the `youtube_cookies.txt` file."
+        )
+    except Exception as e:
+        await m.reply_text(f"⚠️ An error occurred: {str(e)}")     
+@bot.on_message(filters.command("mfile") & filters.private)
+async def getcookies_handler(client: Client, m: Message):
+    try:
+        await client.send_document(
+            chat_id=m.chat.id,
+            document=m_file_path,
+            caption="Here is the `main.py` file."
+        )
+    except Exception as e:
+        await m.reply_text(f"⚠️ An error occurred: {str(e)}")
+
+@bot.on_message(filters.command(["stop"]) )
+async def restart_handler(_, m):
+    if m.chat.id not in AUTH_USERS:
+        print(f"User ID not in AUTH_USERS", m.chat.id)
+        await bot.send_message(
+            m.chat.id, 
+            f"<blockquote>__**Oopss! You are not a Premium member**__\n"
+            f"__**PLEASE /upgrade YOUR PLAN**__\n"
+            f"__**Send me your user id for authorization**__\n"
+            f"__**Your User id** __- `{m.chat.id}`</blockquote>\n\n"
+        )
+    else:
+        await m.reply_text("🚦**STOPPED**🚦", True)
+        os.execl(sys.executable, sys.executable, *sys.argv)
+        
+
 @bot.on_message(filters.command("start"))
 async def start(bot, m: Message):
     user = await bot.get_me()
@@ -255,6 +516,8 @@ async def txt_handler(client: Client, m: Message):
         f"➥ /start – Bot Status Check\n"
         f"➥ /drm – Extract from .txt (Auto)\n"
         f"➥ /y2t – YouTube → .txt Converter\n"  
+        f"➥ /ytm – YT .txt → .mp3 downloader\n"  
+        f"➥ /yt2m – YT link → .mp3 downloader\n"  
         f"➥ /t2t – Text → .txt Generator\n" 
         f"➥ /stop – Cancel Running Task\n"
         f"▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰ \n" 
@@ -498,15 +761,13 @@ async def txt_handler(bot: Client, m: Message):
 
             elif "https://cpvod.testbook.com/" in url:
                 url = url.replace("https://cpvod.testbook.com/","https://media-cdn.classplusapp.com/drm/")
-                url = f"https://key-one-gamma.vercel.app/api?url={url}&token={raw_text4}"
-                #url = 'https://dragoapi.vercel.app/classplus?link=' + url
+                url = f"https://scammer-keys.vercel.app/api?url={url}&token={cptoken}&auth=@scammer_botxz1"
                 mpd, keys = helper.get_mps_and_keys(url)
                 url = mpd
                 keys_string = " ".join([f"--key {key}" for key in keys])
 
             elif "classplusapp.com/drm/" in url:
-                url = f"https://key-one-gamma.vercel.app/api?url={url}&token={raw_text4}"
-                #url = 'https://dragoapi.vercel.app/classplus?link=' + url
+                url = f"https://scammer-keys.vercel.app/api?url={url}&token={cptoken}&auth=@scammer_botxz1"
                 mpd, keys = helper.get_mps_and_keys(url)
                 url = mpd
                 keys_string = " ".join([f"--key {key}" for key in keys])
