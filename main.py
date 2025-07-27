@@ -983,20 +983,19 @@ async def txt_handler(bot: Client, m: Message):
             if "acecwply" in url:
                 cmd = f'yt-dlp -o "{name}.%(ext)s" -f "bestvideo[height<={raw_text2}]+bestaudio" --hls-prefer-ffmpeg --no-keep-video --remux-video mkv --no-warning "{url}"'
 
-            elif "https://cpvod.testbook.com/" in url:
+            elif "https://cpvod.testbook.com/" in url or "classplusapp.com/drm/" in url:
                 url = url.replace("https://cpvod.testbook.com/","https://media-cdn.classplusapp.com/drm/")
-                #url = f"https://team-jnc-ba95987c225e.herokuapp.com/api?url={url}"
-                url = f"https://scammer-keys.vercel.app/api?url={url}&token={cptoken}&auth=@scammer_botxz1"
+                url = f"https://cpapi-rjbs.onrender.com/extract_keys?url={url}@bots_updatee"
+                #url = f"https://scammer-keys.vercel.app/api?url={url}&token={cptoken}&auth=@scammer_botxz1"
                 mpd, keys = helper.get_mps_and_keys(url)
                 url = mpd
                 keys_string = " ".join([f"--key {key}" for key in keys])
 
-            elif "classplusapp.com/drm/" in url:
-                #url = f"https://team-jnc-ba95987c225e.herokuapp.com/api?url={url}"
-                url = f"https://scammer-keys.vercel.app/api?url={url}&token={cptoken}&auth=@scammer_botxz1"
-                mpd, keys = helper.get_mps_and_keys(url)
-                url = mpd
-                keys_string = " ".join([f"--key {key}" for key in keys])
+            elif "classplusapp" in url:
+                signed_api = f"https://cpapi-rjbs.onrender.com/extract_keys?url={url}@bots_updatee"
+                response = requests.get(signed_api, timeout=20)
+                #url = response.text.strip()
+                url = response.json()['url']  
 
                 
             elif "tencdn.classplusapp" in url:
