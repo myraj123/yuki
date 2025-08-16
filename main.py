@@ -997,6 +997,54 @@ async def txt_handler(bot: Client, m: Message):
                 #url = response.text.strip()
                 url = response.json()['url']  
 
+            elif "https://static-trans-v1.classx.co.in" in url or "https://static-trans-v2.classx.co.in" in url:
+                base_with_params, signature = url.split("*")
+
+                base_clean = base_with_params.split(".mkv")[0] + ".mkv"
+
+                if "static-trans-v1.classx.co.in" in url:
+                    base_clean = base_clean.replace("https://static-trans-v1.classx.co.in", "https://appx-transcoded-videos-mcdn.akamai.net.in")
+                elif "static-trans-v2.classx.co.in" in url:
+                    base_clean = base_clean.replace("https://static-trans-v2.classx.co.in", "https://transcoded-videos-v2.classx.co.in")
+
+                url = f"{base_clean}*{signature}"
+            
+            elif "https://static-rec.classx.co.in/drm/" in url:
+                base_with_params, signature = url.split("*")
+
+                base_clean = base_with_params.split("?")[0]
+
+                base_clean = base_clean.replace("https://static-rec.classx.co.in", "https://appx-recordings-mcdn.akamai.net.in")
+
+                url = f"{base_clean}*{signature}"
+
+            elif "https://static-wsb.classx.co.in/" in url:
+                clean_url = url.split("?")[0]
+
+                clean_url = clean_url.replace("https://static-wsb.classx.co.in", "https://appx-wsb-gcp-mcdn.akamai.net.in")
+
+                url = clean_url
+
+            elif "https://static-db.classx.co.in/" in url:
+                if "*" in url:
+                    base_url, key = url.split("*", 1)
+                    base_url = base_url.split("?")[0]
+                    base_url = base_url.replace("https://static-db.classx.co.in", "https://appxcontent.kaxa.in")
+                    url = f"{base_url}*{key}"
+                else:
+                    base_url = url.split("?")[0]
+                    url = base_url.replace("https://static-db.classx.co.in", "https://appxcontent.kaxa.in")
+
+
+            elif "https://static-db-v2.classx.co.in/" in url:
+                if "*" in url:
+                    base_url, key = url.split("*", 1)
+                    base_url = base_url.split("?")[0]
+                    base_url = base_url.replace("https://static-db-v2.classx.co.in", "https://appx-content-v2.classx.co.in")
+                    url = f"{base_url}*{key}"
+                else:
+                    base_url = url.split("?")[0]
+                    url = base_url.replace("https://static-db-v2.classx.co.in", "https://appx-content-v2.classx.co.in")
                 
             elif "tencdn.classplusapp" in url:
                 headers = {'host': 'api.classplusapp.com', 'x-access-token': f'{cptoken}', 'accept-language': 'EN', 'api-version': '18', 'app-version': '1.4.73.2', 'build-number': '35', 'connection': 'Keep-Alive', 'content-type': 'application/json', 'device-details': 'Xiaomi_Redmi 7_SDK-32', 'device-id': 'c28d3cb16bbdac01', 'region': 'IN', 'user-agent': 'Mobile-Android', 'webengage-luid': '00000187-6fe4-5d41-a530-26186858be4c', 'accept-encoding': 'gzip'}
