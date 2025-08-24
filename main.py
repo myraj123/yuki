@@ -781,7 +781,7 @@ async def topic_handler(client: Client, m: Message):
 @bot.on_message(filters.command(["drm"]) )
 async def txt_handler(bot: Client, m: Message):  
     global processing_request, cancel_requested, cancel_message, topic, caption
-        processing_request = True
+    processing_request = True
     cancel_requested = False
     user_id = m.from_user.id
     editable = await m.reply_text(f"**__Hii, I am drm Downloader Bot__\n<blockquote><i>Send Me Your text file which enclude Name with url...\nE.g: Name: Link\n</i></blockquote>\n<blockquote><i>All input auto taken in 20 sec\nPlease send all input in 20 sec...\n</i></blockquote>**")
